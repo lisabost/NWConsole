@@ -26,7 +26,7 @@ namespace NorthwindConsole
                     choice = Console.ReadLine();
                     Console.Clear();
                     logger.Info($"Option {choice} selected");
-                    
+
                     if (choice == "1")
                     {
                         var db = new NWConsole_96_LMBContext();
@@ -40,6 +40,15 @@ namespace NorthwindConsole
                             Console.WriteLine($"{item.CategoryName} - {item.Description}");
                         }
                         Console.ForegroundColor = ConsoleColor.White;
+                    }
+                    else if (choice == "2")
+                    {
+                        Categories category = new Categories();
+                        Console.WriteLine("Enter Category Name:");
+                        category.CategoryName = Console.ReadLine();
+                        Console.WriteLine("Enter the Category Description:");
+                        category.Description = Console.ReadLine();
+                        // TODO: save category to db
                     }
                     Console.WriteLine();
 
