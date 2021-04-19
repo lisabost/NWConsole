@@ -101,7 +101,8 @@ namespace NorthwindConsole
 
                         Categories category = db.Categories.Include("Products").FirstOrDefault(c => c.CategoryId == id);
                         Console.WriteLine($"{category.CategoryName} - {category.Description}");
-                        foreach (Products p in category.Products)
+                        //Do not display discontinued products when displaying categories and related products
+                        foreach (Products p in category.Products.Where(p => !p.Discontinued))
                         {
                             Console.WriteLine(p.ProductName);
                         }
