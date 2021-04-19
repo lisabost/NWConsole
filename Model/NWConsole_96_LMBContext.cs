@@ -319,5 +319,11 @@ namespace NorthwindConsole.Model
             category.Description = UpdatedCategory.Description;
             this.SaveChanges();
         }
+
+        public void DeleteCategory(Categories category)
+        {
+            this.Categories.Remove(category);
+            this.SaveChanges();
+        }
     }
 }
