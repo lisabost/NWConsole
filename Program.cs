@@ -100,6 +100,7 @@ namespace NorthwindConsole
                     }
                     else if (choice == "4")
                     {
+                        logger.Info("User choice: 4 - Display all categories and related active products.");
                         var db = new NWConsole_96_LMBContext();
                         var query = db.Categories.Include("Products").OrderBy(p => p.CategoryId);
                         foreach (var item in query)
@@ -114,7 +115,13 @@ namespace NorthwindConsole
                     }
                     else if (choice == "5")
                     {
+                        logger.Info("User choice: 5 - Edit Category");
                         //todo: edit category
+                    }
+                    else if (choice == "6")
+                    {
+                        logger.Info("User choice: 6 - Delete Category");
+                        //todo: delete category
                     }
                     Console.WriteLine();
 
