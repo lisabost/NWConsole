@@ -28,6 +28,7 @@ namespace NorthwindConsole
                     Console.WriteLine("3) Display Category and related products");
                     Console.WriteLine("4) Display all Categories and their related products");
                     Console.WriteLine("5) Edit a Category");
+                    Console.WriteLine("6) Delete a Category");
                     Console.WriteLine("\"q\" to quit");
                     choice = Console.ReadLine();
                     Console.Clear();
@@ -135,7 +136,16 @@ namespace NorthwindConsole
                     else if (choice == "6")
                     {
                         logger.Info("User choice: 6 - Delete Category");
-                        //todo: delete category
+                        Console.WriteLine("Choose the category to delete");
+                        var db = new NWConsole_96_LMBContext();
+                        var category = GetCategory(db);
+                        if (category != null)
+                        {
+                            //delete category
+                            db.DeleteCategory(category);
+
+                            logger.Info($"Category (id: {category.CategoryId}) deleted.");
+                        }
                     }
                     Console.WriteLine();
 
