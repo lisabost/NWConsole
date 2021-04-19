@@ -325,5 +325,12 @@ namespace NorthwindConsole.Model
             this.Categories.Remove(category);
             this.SaveChanges();
         }
+
+        public void AddProduct(Products product)
+        {
+            this.Products.Add(product);
+            this.SaveChanges();
+        }
+
     }
 }
