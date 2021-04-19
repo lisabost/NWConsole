@@ -116,7 +116,21 @@ namespace NorthwindConsole
                     else if (choice == "5")
                     {
                         logger.Info("User choice: 5 - Edit Category");
-                        //todo: edit category
+                        //edit category
+                        Console.WriteLine("Choose the category to edit:");
+                        var db = new NWConsole_96_LMBContext();
+                        var category = GetCategory(db);
+                        if (category != null)
+                        {
+                            //input new category
+                            Categories UpdatedCategory = InputCategory(db);
+                            if (UpdatedCategory != null)
+                            {
+                                UpdatedCategory.CategoryId = category.CategoryId;
+                                db.EditCategory(UpdatedCategory);
+                                logger.Info($"Category (id: {category.CategoryId}) updated.");
+                            }
+                        }
                     }
                     else if (choice == "6")
                     {
@@ -159,7 +173,6 @@ namespace NorthwindConsole
                 else
                 {
                     logger.Info("Validation passed");
-                    // TODO: save category to db
                 }
             }
             if (!isValid)
@@ -171,6 +184,26 @@ namespace NorthwindConsole
                 return null;
             }
             return category;
+        }
+
+        public static Categories GetCategory(NWConsole_96_LMBContext db)
+        {
+            //display all categories
+            var categories = db.Categories.OrderBy(c => c.CategoryId);
+            foreach (Categories c in categories)
+            {
+                Console.WriteLine($"{c.CategoryId}: {c.CategoryName}");
+            }
+            if (int.TryParse(Console.ReadLine(), out int CategoryID))
+            {
+                Categories category = db.Categories.FirstOrDefault(c => c.CategoryId == CategoryID);
+                if (category != null)
+                {
+                    return category;
+                }
+            }
+            logger.Error("Invalid Category Id");
+            return null;
         }
     }
 }
