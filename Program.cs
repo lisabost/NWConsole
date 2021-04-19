@@ -198,8 +198,8 @@ namespace NorthwindConsole
                                 }
                                 else
                                 {
-                                    logger.Info("No Active Products Exist");
-                                    Console.WriteLine("No active products exist");
+                                    logger.Info("No active products");
+                                    Console.WriteLine("There are no active products");
                                 }
                             }
                             else if (input == "2")
@@ -217,6 +217,11 @@ namespace NorthwindConsole
                                     }
                                     Console.WriteLine();
                                 }
+                                else
+                                {
+                                    logger.Info("No discontinued products");
+                                    Console.WriteLine("No discontinued products");
+                                }
                             }
                             else if (input == "3")
                             {
@@ -226,7 +231,7 @@ namespace NorthwindConsole
                                 var discontinuedQuery = db.Products.OrderBy(p => p.ProductName).Where(p => p.Discontinued);
 
                                 Console.WriteLine("Active Products:");
-                                foreach (var product in activeQuery) 
+                                foreach (var product in activeQuery)
                                 {
                                     Console.WriteLine($"\t{product.ProductName}");
                                 }
@@ -247,7 +252,28 @@ namespace NorthwindConsole
                         }
                         else if (choice == "2")
                         {
-
+                            logger.Info("User choice: 2 - Add product");
+                            //add product - products have name (string, not null), supplier Id (int), category Id (int), quantity per unit (string), unit price (double), 
+                            //units in stock (smallint), units on order (smallint), reorder level (smallint), discontinued (bit, not null)
+                            try
+                            {
+                                var db = new NWConsole_96_LMBContext();
+                                Products product = InputProduct(db);
+                                if (product != null)
+                                {
+                                    db.AddProduct(product);
+                                    logger.Info("Product added - {name}", product.ProductName);
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                logger.Error(ex.Message);
+                            }
+                        }
+                        else if (choice == "3")
+                        {
+                            logger.Info("User choice: 3 - Edit product");
+                            //edit product
                         }
                     }
                     while (choice.ToLower() != "q");
@@ -296,6 +322,54 @@ namespace NorthwindConsole
                 return null;
             }
             return category;
+        }
+
+        public static Products InputProduct(NWConsole_96_LMBContext db)
+        {
+            Products product = new Products();
+            Console.WriteLine("Enter product name:");
+            product.ProductName = Console.ReadLine();
+            Console.WriteLine("Is the product active: (y/n)");
+            string active = Console.ReadLine();
+            if (active.ToLower() == "y")
+            {
+                product.Discontinued = false;
+            }
+            else if (active.ToLower() == "n")
+            {
+                product.Discontinued = true;
+            }
+            else
+            {
+                logger.Error("Invalid input");
+            }
+
+            ValidationContext context = new ValidationContext(product, null, null);
+            List<ValidationResult> results = new List<ValidationResult>();
+            var isValid = Validator.TryValidateObject(product, context, results, true);
+            if (isValid)
+            {
+                // check for unique name
+                if (db.Products.Any(p => p.ProductName == product.ProductName))
+                {
+                    // generate validation error
+                    isValid = false;
+                    results.Add(new ValidationResult("Name exists", new string[] { "ProductName" }));
+                }
+                else
+                {
+                    logger.Info("Validation passed");
+                }
+            }
+            if (!isValid)
+            {
+                foreach (var result in results)
+                {
+                    logger.Error($"{result.MemberNames.First()} : {result.ErrorMessage}");
+                }
+                return null;
+            }
+            return product;
         }
 
         public static Categories GetCategory(NWConsole_96_LMBContext db)
