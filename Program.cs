@@ -171,6 +171,84 @@ namespace NorthwindConsole
                         choice = Console.ReadLine();
                         Console.Clear();
                         logger.Info($"Option {choice} selected");
+
+                        if (choice == "1")
+                        {
+                            var db = new NWConsole_96_LMBContext();
+
+                            Console.WriteLine("1) Display Active Products");
+                            Console.WriteLine("2) Display Discontinued Products");
+                            Console.WriteLine("3) Display All Products");
+                            string input = Console.ReadLine();
+
+                            if (input == "1")
+                            {
+                                logger.Info("User choice: 1 - Display active products");
+                                //display active products
+                                var activeQuery = db.Products.OrderBy(p => p.ProductName).Where(p => !p.Discontinued);
+                                Console.WriteLine($"Number of Active Products: {activeQuery.Count()}");
+
+                                if (activeQuery.Count() != 0)
+                                {
+                                    foreach (var product in activeQuery)
+                                    {
+                                        Console.WriteLine(product.ProductName);
+                                    }
+                                    Console.WriteLine();
+                                }
+                                else
+                                {
+                                    logger.Info("No Active Products Exist");
+                                    Console.WriteLine("No active products exist");
+                                }
+                            }
+                            else if (input == "2")
+                            {
+                                logger.Info("User choice: 2 - Display discontinued prodcuts");
+                                //display discontinuted products
+                                var discontinuedQuery = db.Products.OrderBy(p => p.ProductName).Where(p => p.Discontinued);
+                                Console.WriteLine($"Number of Discontinued Products: {discontinuedQuery.Count()}");
+
+                                if (discontinuedQuery.Count() != 0)
+                                {
+                                    foreach (var product in discontinuedQuery)
+                                    {
+                                        Console.WriteLine(product.ProductName);
+                                    }
+                                    Console.WriteLine();
+                                }
+                            }
+                            else if (input == "3")
+                            {
+                                logger.Info("User choice: 3 - Display all products");
+                                //display all products - active and discontinued
+                                var activeQuery = db.Products.OrderBy(p => p.ProductName).Where(p => !p.Discontinued);
+                                var discontinuedQuery = db.Products.OrderBy(p => p.ProductName).Where(p => p.Discontinued);
+
+                                Console.WriteLine("Active Products:");
+                                foreach (var product in activeQuery) 
+                                {
+                                    Console.WriteLine($"\t{product.ProductName}");
+                                }
+                                Console.WriteLine($"Total Active Products: {activeQuery.Count()}");
+
+                                Console.WriteLine("Discontinued Products:");
+                                foreach (var product in discontinuedQuery)
+                                {
+                                    Console.WriteLine($"\t{product.ProductName}");
+                                }
+                                Console.WriteLine($"Total Discontinued Products: {discontinuedQuery.Count()}");
+
+                            }
+                            else
+                            {
+                                Console.WriteLine("Invalid Choice");
+                            }
+                        }
+                        else if (choice == "2")
+                        {
+
+                        }
                     }
                     while (choice.ToLower() != "q");
                 }
