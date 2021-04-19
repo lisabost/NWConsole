@@ -114,7 +114,8 @@ namespace NorthwindConsole
                         foreach (var item in query)
                         {
                             Console.WriteLine($"{item.CategoryName}");
-                            foreach (Products p in item.Products)
+                            //do not display discontinued products
+                            foreach (Products p in item.Products.Where(p => !p.Discontinued))
                             {
                                 Console.WriteLine($"\t{p.ProductName}");
                             }
