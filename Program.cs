@@ -27,6 +27,7 @@ namespace NorthwindConsole
                     Console.WriteLine("2) Add Category");
                     Console.WriteLine("3) Display Category and related products");
                     Console.WriteLine("4) Display all Categories and their related products");
+                    Console.WriteLine("5) Edit a Category");
                     Console.WriteLine("\"q\" to quit");
                     choice = Console.ReadLine();
                     Console.Clear();
@@ -48,39 +49,20 @@ namespace NorthwindConsole
                     }
                     else if (choice == "2")
                     {
-                        Categories category = new Categories();
-                        Console.WriteLine("Enter Category Name:");
-                        category.CategoryName = Console.ReadLine();
-                        Console.WriteLine("Enter the Category Description:");
-                        category.Description = Console.ReadLine();
-
-                        ValidationContext context = new ValidationContext(category, null, null);
-                        List<ValidationResult> results = new List<ValidationResult>();
-
-                        var isValid = Validator.TryValidateObject(category, context, results, true);
-                        if (isValid)
+                        logger.Info("User choice: 2 - Enter new Category");
+                        try
                         {
-                            logger.Info("Validation passed");
                             var db = new NWConsole_96_LMBContext();
-                            // check for unique name
-                            if (db.Categories.Any(c => c.CategoryName == category.CategoryName))
+                            Categories category = InputCategory(db);
+                            if (category != null)
                             {
-                                // generate validation error
-                                isValid = false;
-                                results.Add(new ValidationResult("Name exists", new string[] { "CategoryName" }));
-                            }
-                            else
-                            {
-                                logger.Info("Validation passed");
-                                // TODO: save category to db
+                                db.AddCategory(category);
+                                logger.Info("Category added - {name}", category.CategoryName);
                             }
                         }
-                        if (!isValid)
+                        catch (Exception ex)
                         {
-                            foreach (var result in results)
-                            {
-                                logger.Error($"{result.MemberNames.First()} : {result.ErrorMessage}");
-                            }
+                            logger.Error(ex.Message);
                         }
                     }
                     else if (choice == "3")
@@ -101,10 +83,19 @@ namespace NorthwindConsole
 
                         Categories category = db.Categories.Include("Products").FirstOrDefault(c => c.CategoryId == id);
                         Console.WriteLine($"{category.CategoryName} - {category.Description}");
-                        //Do not display discontinued products when displaying categories and related products
-                        foreach (Products p in category.Products.Where(p => !p.Discontinued))
+
+                        if (category.Products.Count() != 0)
                         {
-                            Console.WriteLine(p.ProductName);
+                            //Do not display discontinued products when displaying categories and related products
+                            foreach (Products p in category.Products.Where(p => !p.Discontinued))
+                            {
+                                Console.WriteLine(p.ProductName);
+                            }
+                        }
+                        else
+                        {
+                            //nice display message if there are no products in that category
+                            Console.WriteLine("There are no products in this category.");
                         }
                     }
                     else if (choice == "4")
@@ -121,6 +112,10 @@ namespace NorthwindConsole
                             }
                         }
                     }
+                    else if (choice == "5")
+                    {
+                        //todo: edit category
+                    }
                     Console.WriteLine();
 
                 } while (choice.ToLower() != "q");
@@ -131,6 +126,44 @@ namespace NorthwindConsole
             }
 
             logger.Info("Program ended");
+        }
+
+        public static Categories InputCategory(NWConsole_96_LMBContext db)
+        {
+            Categories category = new Categories();
+            Console.WriteLine("Enter Category name:");
+            category.CategoryName = Console.ReadLine();
+            Console.WriteLine("Enter Category description");
+            category.Description = Console.ReadLine();
+
+            ValidationContext context = new ValidationContext(category, null, null);
+            List<ValidationResult> results = new List<ValidationResult>();
+
+            var isValid = Validator.TryValidateObject(category, context, results, true);
+            if (isValid)
+            {
+                // check for unique name
+                if (db.Categories.Any(c => c.CategoryName == category.CategoryName))
+                {
+                    // generate validation error
+                    isValid = false;
+                    results.Add(new ValidationResult("Name exists", new string[] { "CategoryName" }));
+                }
+                else
+                {
+                    logger.Info("Validation passed");
+                    // TODO: save category to db
+                }
+            }
+            if (!isValid)
+            {
+                foreach (var result in results)
+                {
+                    logger.Error($"{result.MemberNames.First()} : {result.ErrorMessage}");
+                }
+                return null;
+            }
+            return category;
         }
     }
 }
