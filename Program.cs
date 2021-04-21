@@ -160,7 +160,7 @@ namespace NorthwindConsole
                                 else
                                 {
                                     logger.Error("Cannot delete category with dependencies");
-                                }    
+                                }
                             }
                         }
                         Console.WriteLine();
@@ -170,6 +170,8 @@ namespace NorthwindConsole
                 else if (option == "2")
                 {
                     //Products time
+                    logger.Info("User choice: 2 - Products");
+                    
                     string choice;
                     do
                     {
@@ -340,6 +342,7 @@ namespace NorthwindConsole
             Products product = new Products();
             Console.WriteLine("Enter product name:");
             product.ProductName = Console.ReadLine();
+
             Console.WriteLine("Is the product active: (y/n)");
             string active = Console.ReadLine();
             if (active.ToLower() == "y")
@@ -354,20 +357,27 @@ namespace NorthwindConsole
             {
                 logger.Error("Invalid input");
             }
-            Console.WriteLine("Enter the supplier Id:");
-            product.SupplierId = int.Parse(Console.ReadLine());
-            Console.WriteLine("Enter the category Id:");
-            product.CategoryId = int.Parse(Console.ReadLine());
-            Console.WriteLine("Enter quantity per unit:");
-            product.QuantityPerUnit = Console.ReadLine();
-            Console.WriteLine("Enter unit price:");
-            product.UnitPrice = decimal.Parse(Console.ReadLine());
-            Console.WriteLine("Enter units in stock:");
-            product.UnitsInStock = short.Parse(Console.ReadLine());
-            Console.WriteLine("Enter units on order:");
-            product.UnitsOnOrder = short.Parse(Console.ReadLine());
-            Console.WriteLine("Enter reorder level:");
-            product.ReorderLevel = short.Parse(Console.ReadLine());
+
+            Console.WriteLine("Do you want to enter additional details? (y/n)");
+            string reply = Console.ReadLine().ToLower();
+
+            if (reply == "y")
+            {
+                Console.WriteLine("Enter the supplier Id:");
+                product.SupplierId = int.Parse(Console.ReadLine());
+                Console.WriteLine("Enter the category Id:");
+                product.CategoryId = int.Parse(Console.ReadLine());
+                Console.WriteLine("Enter quantity per unit:");
+                product.QuantityPerUnit = Console.ReadLine();
+                Console.WriteLine("Enter unit price:");
+                product.UnitPrice = decimal.Parse(Console.ReadLine());
+                Console.WriteLine("Enter units in stock:");
+                product.UnitsInStock = short.Parse(Console.ReadLine());
+                Console.WriteLine("Enter units on order:");
+                product.UnitsOnOrder = short.Parse(Console.ReadLine());
+                Console.WriteLine("Enter reorder level:");
+                product.ReorderLevel = short.Parse(Console.ReadLine());
+            }
 
             ValidationContext context = new ValidationContext(product, null, null);
             List<ValidationResult> results = new List<ValidationResult>();
@@ -414,6 +424,26 @@ namespace NorthwindConsole
                 }
             }
             logger.Error("Invalid Category Id");
+            return null;
+        }
+
+        public static Products GetProduct(NWConsole_96_LMBContext db)
+        {
+            //display all products
+            var products = db.Products.OrderBy(p => p.ProductId);
+            foreach (Products p in products)
+            {
+                Console.WriteLine($"{p.ProductId}: {p.ProductName}");
+            }
+            if (int.TryParse(Console.ReadLine(), out int ProductId))
+            {
+                Products product = db.Products.FirstOrDefault(p => p.ProductId == ProductId);
+                if (product != null)
+                {
+                    return product;
+                }
+            }
+            logger.Error("Invalid Product Id");
             return null;
         }
     }
