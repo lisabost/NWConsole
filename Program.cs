@@ -178,6 +178,7 @@ namespace NorthwindConsole
                         Console.WriteLine("1) Display Products");
                         Console.WriteLine("2) Add Product");
                         Console.WriteLine("3) Edit Product");
+                        Console.WriteLine("4) Delete Product");
                         Console.WriteLine("\"q\" to quit");
                         choice = Console.ReadLine();
                         Console.Clear();
@@ -314,6 +315,30 @@ namespace NorthwindConsole
                                 {
                                     db.EditProduct(ValidUpdatedProduct);
                                     logger.Info($"Product (id: {product.ProductId}) updated.");
+                                }
+                            }
+                        }
+                        else if (choice == "4")
+                        {
+                            logger.Info("User choice: 4 - Delete product");
+                            Console.WriteLine("Choose a product to delete");
+                            var db = new NWConsole_96_LMBContext();
+                            var product = GetProduct(db);
+
+                            if (product != null)
+                            {
+                                //check for dependencies
+                                var orderDetails = db.OrderDetails.Where(o => o.ProductId == product.ProductId);
+                                if (orderDetails.Count() != 0)
+                                {
+                                    //if there are order details attached we can't delete the product
+                                    logger.Error("Cannot delete product where order exists. Mark as discontinued instead.");
+                                }
+                                else
+                                {
+                                    db.DeleteProduct(product);
+                                    logger.Info($"Product (id: {product.CategoryId}) deleted.");
+                                    
                                 }
                             }
                         }
