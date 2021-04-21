@@ -332,5 +332,19 @@ namespace NorthwindConsole.Model
             this.SaveChanges();
         }
 
+        public void EditProduct(Products UpdatedProduct)
+        {
+            Products product = this.Products.Find(UpdatedProduct.ProductId);
+            product.ProductName = UpdatedProduct.ProductName;
+            product.Discontinued = UpdatedProduct.Discontinued;
+            product.SupplierId = UpdatedProduct.SupplierId;
+            product.CategoryId = UpdatedProduct.CategoryId;
+            product.QuantityPerUnit = UpdatedProduct.QuantityPerUnit;
+            product.UnitPrice = UpdatedProduct.UnitPrice;
+            product.UnitsInStock = UpdatedProduct.UnitsInStock;
+            product.UnitsOnOrder = UpdatedProduct.UnitsOnOrder;
+            product.ReorderLevel = UpdatedProduct.ReorderLevel;
+            this.SaveChanges();
+        }
     }
 }
