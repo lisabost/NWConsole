@@ -159,7 +159,7 @@ namespace NorthwindConsole
                                 }
                                 else
                                 {
-                                    logger.Error("Cannot delete category with dependencies");
+                                    logger.Error("Cannot delete category with products in it. You must remove products first to delete the category.");
                                 }
                             }
                         }
@@ -337,7 +337,7 @@ namespace NorthwindConsole
                                 else
                                 {
                                     db.DeleteProduct(product);
-                                    logger.Info($"Product (id: {product.CategoryId}) deleted.");
+                                    logger.Info($"Product (id: {product.ProductId}) deleted.");
                                     
                                 }
                             }
