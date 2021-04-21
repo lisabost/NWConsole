@@ -148,10 +148,19 @@ namespace NorthwindConsole
                             var category = GetCategory(db);
                             if (category != null)
                             {
-                                //delete category
-                                db.DeleteCategory(category);
+                                //check to see if the category has dependencies
+                                var products = db.Products.Where(p => p.CategoryId == category.CategoryId);
 
-                                logger.Info($"Category (id: {category.CategoryId}) deleted.");
+                                if (products.Count() == 0)
+                                {
+                                    //delete category
+                                    db.DeleteCategory(category);
+                                    logger.Info($"Category (id: {category.CategoryId}) deleted.");
+                                }
+                                else
+                                {
+                                    logger.Error("Cannot delete category with dependencies");
+                                }    
                             }
                         }
                         Console.WriteLine();
@@ -326,6 +335,8 @@ namespace NorthwindConsole
 
         public static Products InputProduct(NWConsole_96_LMBContext db)
         {
+            //add product - products have name (string, not null), supplier Id (int), category Id (int), quantity per unit (string), unit price (double), 
+            //units in stock (smallint), units on order (smallint), reorder level (smallint), discontinued (bit, not null)
             Products product = new Products();
             Console.WriteLine("Enter product name:");
             product.ProductName = Console.ReadLine();
@@ -343,6 +354,20 @@ namespace NorthwindConsole
             {
                 logger.Error("Invalid input");
             }
+            Console.WriteLine("Enter the supplier Id:");
+            product.SupplierId = int.Parse(Console.ReadLine());
+            Console.WriteLine("Enter the category Id:");
+            product.CategoryId = int.Parse(Console.ReadLine());
+            Console.WriteLine("Enter quantity per unit:");
+            product.QuantityPerUnit = Console.ReadLine();
+            Console.WriteLine("Enter unit price:");
+            product.UnitPrice = decimal.Parse(Console.ReadLine());
+            Console.WriteLine("Enter units in stock:");
+            product.UnitsInStock = short.Parse(Console.ReadLine());
+            Console.WriteLine("Enter units on order:");
+            product.UnitsOnOrder = short.Parse(Console.ReadLine());
+            Console.WriteLine("Enter reorder level:");
+            product.ReorderLevel = short.Parse(Console.ReadLine());
 
             ValidationContext context = new ValidationContext(product, null, null);
             List<ValidationResult> results = new List<ValidationResult>();
