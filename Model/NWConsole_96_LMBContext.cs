@@ -346,5 +346,11 @@ namespace NorthwindConsole.Model
             product.ReorderLevel = UpdatedProduct.ReorderLevel;
             this.SaveChanges();
         }
+
+        public void DeleteProduct(Products product)
+        {
+            this.Products.Remove(product);
+            this.SaveChanges();
+        }
     }
 }
