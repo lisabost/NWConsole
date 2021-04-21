@@ -171,7 +171,7 @@ namespace NorthwindConsole
                 {
                     //Products time
                     logger.Info("User choice: 2 - Products");
-                    
+
                     string choice;
                     do
                     {
@@ -185,11 +185,13 @@ namespace NorthwindConsole
 
                         if (choice == "1")
                         {
+                            logger.Info("User choice: 1 - Display Products");
                             var db = new NWConsole_96_LMBContext();
 
                             Console.WriteLine("1) Display Active Products");
                             Console.WriteLine("2) Display Discontinued Products");
                             Console.WriteLine("3) Display All Products");
+                            Console.WriteLine("4) Display Specific Product Information");
                             string input = Console.ReadLine();
 
                             if (input == "1")
@@ -231,7 +233,6 @@ namespace NorthwindConsole
                                 else
                                 {
                                     logger.Info("No discontinued products");
-                                    Console.WriteLine("No discontinued products");
                                 }
                             }
                             else if (input == "3")
@@ -256,9 +257,24 @@ namespace NorthwindConsole
                                 Console.WriteLine($"Total Discontinued Products: {discontinuedQuery.Count()}");
 
                             }
+                            else if (input == "4")
+                            {
+                                logger.Info("User choice 4: Display specific product information");
+                                Console.WriteLine("Choose a product to display");
+                                var product = GetProduct(db);
+                                
+                                if (product != null)
+                                {
+                                    Console.WriteLine($"Product Id: {product.ProductId}\nProduct name: {product.ProductName}\nSupplier Id: {product.SupplierId}\nCategory Id: {product.CategoryId}\nQuantity Per Unit: {product.QuantityPerUnit}\nUnit Price: {product.UnitPrice:C2}\nUnits in Stock: {product.UnitsInStock}\nUnits on Order: {product.UnitsOnOrder}\nReorder Level: {product.ReorderLevel}\n");
+                                }
+                                else
+                                {
+                                    logger.Error("No product to display");
+                                }
+                            }
                             else
                             {
-                                Console.WriteLine("Invalid Choice");
+                                logger.Error("Invalid Choice");
                             }
                         }
                         else if (choice == "2")
@@ -270,10 +286,11 @@ namespace NorthwindConsole
                             {
                                 var db = new NWConsole_96_LMBContext();
                                 Products product = InputProduct(db);
-                                if (product != null)
+                                Products validProduct = ValidateProductName(db, product);
+                                if (validProduct != null)
                                 {
-                                    db.AddProduct(product);
-                                    logger.Info("Product added - {name}", product.ProductName);
+                                    db.AddProduct(validProduct);
+                                    logger.Info("Product added - {name}", validProduct.ProductName);
                                 }
                             }
                             catch (Exception ex)
@@ -285,6 +302,20 @@ namespace NorthwindConsole
                         {
                             logger.Info("User choice: 3 - Edit product");
                             //edit product
+                            Console.WriteLine("Choose a product to edit");
+                            var db = new NWConsole_96_LMBContext();
+                            var product = GetProduct(db);
+                            if (product != null)
+                            {
+                                Products UpdatedProduct = InputProduct(db);
+                                UpdatedProduct.ProductId = product.ProductId;
+                                Products ValidUpdatedProduct = ValidateProductName(db, UpdatedProduct);
+                                if (ValidUpdatedProduct != null)
+                                {
+                                    db.EditProduct(ValidUpdatedProduct);
+                                    logger.Info($"Product (id: {product.ProductId}) updated.");
+                                }
+                            }
                         }
                     }
                     while (choice.ToLower() != "q");
@@ -358,51 +389,90 @@ namespace NorthwindConsole
                 logger.Error("Invalid input");
             }
 
-            Console.WriteLine("Do you want to enter additional details? (y/n)");
-            string reply = Console.ReadLine().ToLower();
-
-            if (reply == "y")
+            Console.WriteLine("Enter the supplier Id:");
+            var supplierID = Console.ReadLine();
+            if (supplierID == null || supplierID == "")
             {
-                Console.WriteLine("Enter the supplier Id:");
-                product.SupplierId = int.Parse(Console.ReadLine());
-                Console.WriteLine("Enter the category Id:");
-                product.CategoryId = int.Parse(Console.ReadLine());
-                Console.WriteLine("Enter quantity per unit:");
-                product.QuantityPerUnit = Console.ReadLine();
-                Console.WriteLine("Enter unit price:");
-                product.UnitPrice = decimal.Parse(Console.ReadLine());
-                Console.WriteLine("Enter units in stock:");
-                product.UnitsInStock = short.Parse(Console.ReadLine());
-                Console.WriteLine("Enter units on order:");
-                product.UnitsOnOrder = short.Parse(Console.ReadLine());
-                Console.WriteLine("Enter reorder level:");
-                product.ReorderLevel = short.Parse(Console.ReadLine());
+                logger.Info("No supplier Id entered");
+                product.SupplierId = null;
+            }
+            else
+            {
+                product.SupplierId = int.Parse(supplierID);
             }
 
-            ValidationContext context = new ValidationContext(product, null, null);
-            List<ValidationResult> results = new List<ValidationResult>();
-            var isValid = Validator.TryValidateObject(product, context, results, true);
-            if (isValid)
+            Console.WriteLine("Enter the category Id:");
+            var categoryID = Console.ReadLine();
+            if (categoryID == null || categoryID == "")
             {
-                // check for unique name
-                if (db.Products.Any(p => p.ProductName == product.ProductName))
-                {
-                    // generate validation error
-                    isValid = false;
-                    results.Add(new ValidationResult("Name exists", new string[] { "ProductName" }));
-                }
-                else
-                {
-                    logger.Info("Validation passed");
-                }
+                logger.Info("No category Id entered");
+                product.CategoryId = null;
             }
-            if (!isValid)
+            else
             {
-                foreach (var result in results)
-                {
-                    logger.Error($"{result.MemberNames.First()} : {result.ErrorMessage}");
-                }
-                return null;
+                product.CategoryId = int.Parse(categoryID);
+            }
+
+
+            Console.WriteLine("Enter quantity per unit:");
+            var quantityPerUnit = Console.ReadLine();
+            if (quantityPerUnit == null || quantityPerUnit == "")
+            {
+                logger.Info("No quantity per unit entered");
+                product.QuantityPerUnit = null;
+            }
+            else
+            {
+                product.QuantityPerUnit = quantityPerUnit;
+            }
+
+            Console.WriteLine("Enter unit price:");
+            var unitPrice = Console.ReadLine();
+            if (unitPrice == null || unitPrice == "")
+            {
+                logger.Info("No unit price entered");
+                product.UnitPrice = null;
+            }
+            else
+            {
+                product.UnitPrice = decimal.Parse(unitPrice);
+            }
+
+            Console.WriteLine("Enter units in stock:");
+            var unitsInStock = Console.ReadLine();
+            if (unitsInStock == null || unitsInStock == "")
+            {
+                logger.Info("No units in stock entered");
+                product.UnitsInStock = null;
+            }
+            else
+            {
+                product.UnitsInStock = short.Parse(unitsInStock);
+            }
+
+
+            Console.WriteLine("Enter units on order:");
+            var unitsOnOrder = Console.ReadLine();
+            if (unitsOnOrder == null || unitsOnOrder == "")
+            {
+                logger.Info("No units on order entered");
+                product.UnitsOnOrder = null;
+            }
+            else
+            {
+                product.UnitsOnOrder = short.Parse(unitsOnOrder);
+            }
+
+            Console.WriteLine("Enter reorder level:");
+            var reorderLevel = Console.ReadLine();
+            if (reorderLevel == null || reorderLevel == "")
+            {
+                logger.Info("No reorder level entered");
+                product.ReorderLevel = null;
+            }
+            else
+            {
+                product.ReorderLevel = short.Parse(reorderLevel);
             }
             return product;
         }
@@ -445,6 +515,45 @@ namespace NorthwindConsole
             }
             logger.Error("Invalid Product Id");
             return null;
+        }
+
+        public static Products ValidateProductName(NWConsole_96_LMBContext db, Products product)
+        {
+            //if we are editing the product but not changing the name, it is ok
+            var duplicateProduct = db.Products.Where(p => p.ProductName == product.ProductName).FirstOrDefault();
+            if (duplicateProduct.ProductId == product.ProductId)
+            {
+                return product;
+            }
+            else
+            {
+                ValidationContext context = new ValidationContext(product, null, null);
+                List<ValidationResult> results = new List<ValidationResult>();
+                var isValid = Validator.TryValidateObject(product, context, results, true);
+                if (isValid)
+                {
+                    // check for unique name
+                    if (db.Products.Any(p => p.ProductName == product.ProductName))
+                    {
+                        // generate validation error
+                        isValid = false;
+                        results.Add(new ValidationResult("Name exists", new string[] { "ProductName" }));
+                    }
+                    else
+                    {
+                        logger.Info("Validation passed");
+                    }
+                }
+                if (!isValid)
+                {
+                    foreach (var result in results)
+                    {
+                        logger.Error($"{result.MemberNames.First()} : {result.ErrorMessage}");
+                    }
+                    return null;
+                }
+                return product;
+            }
         }
     }
 }
