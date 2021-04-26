@@ -61,8 +61,10 @@ namespace NorthwindConsole
                             try
                             {
                                 var db = new NWConsole_96_LMBContext();
+                                bool editing = false;
                                 Categories category = InputCategory(db);
-                                Categories validCategory = ValidateCategoryName(db, category);
+
+                                Categories validCategory = ValidateCategoryName(db, category, editing);
                                 if (validCategory != null)
                                 {
                                     db.AddCategory(validCategory);
@@ -135,7 +137,8 @@ namespace NorthwindConsole
                                 //input new category
                                 Categories UpdatedCategory = InputCategory(db);
                                 UpdatedCategory.CategoryId = category.CategoryId;
-                                Categories ValidUpdatedCategory = ValidateCategoryName(db, UpdatedCategory);
+                                bool editing = true;
+                                Categories ValidUpdatedCategory = ValidateCategoryName(db, UpdatedCategory, editing);
                                 if (ValidUpdatedCategory != null)
                                 {
                                     db.EditCategory(ValidUpdatedCategory);
@@ -302,7 +305,8 @@ namespace NorthwindConsole
                             {
                                 var db = new NWConsole_96_LMBContext();
                                 Products product = InputProduct(db);
-                                Products validProduct = ValidateProductName(db, product);
+                                bool editing = false;
+                                Products validProduct = ValidateProductName(db, product, editing);
                                 if (validProduct != null)
                                 {
                                     db.AddProduct(validProduct);
@@ -325,7 +329,8 @@ namespace NorthwindConsole
                             {
                                 Products UpdatedProduct = InputProduct(db);
                                 UpdatedProduct.ProductId = product.ProductId;
-                                Products ValidUpdatedProduct = ValidateProductName(db, UpdatedProduct);
+                                bool editing = true;
+                                Products ValidUpdatedProduct = ValidateProductName(db, UpdatedProduct, editing);
                                 if (ValidUpdatedProduct != null)
                                 {
                                     db.EditProduct(ValidUpdatedProduct);
@@ -528,15 +533,13 @@ namespace NorthwindConsole
             return null;
         }
 
-        public static Products ValidateProductName(NWConsole_96_LMBContext db, Products product)
+        public static Products ValidateProductName(NWConsole_96_LMBContext db, Products product, bool editing)
         {
             //if we are editing the product but not changing the name, it is ok
             var duplicateProduct = db.Products.Where(p => p.ProductName == product.ProductName).FirstOrDefault();
-            if (duplicateProduct.ProductId == product.ProductId)
-            {
-                return product;
-            }
-            else
+            //if this is a brand new product the product ID is 0 until it is added to the database
+            
+            if (!editing || duplicateProduct.ProductId != product.ProductId)
             {
                 ValidationContext context = new ValidationContext(product, null, null);
                 List<ValidationResult> results = new List<ValidationResult>();
@@ -565,43 +568,48 @@ namespace NorthwindConsole
                 }
                 return product;
             }
+            else
+            {
+                return product;
+            }
         }
 
-        public static Categories ValidateCategoryName(NWConsole_96_LMBContext db, Categories category)
+        public static Categories ValidateCategoryName(NWConsole_96_LMBContext db, Categories category, bool editing)
         {
-            //if we are editing the product but not changing the name, it is ok
+            //if we are editing the category but not changing the name, it is ok
             var duplicateCategory = db.Categories.Where(c => c.CategoryName == category.CategoryName).FirstOrDefault();
-            if (duplicateCategory.CategoryId == category.CategoryId)
+            //if this is a brand new category the categoryID is 0 until it is added to the database
+            if (!editing || duplicateCategory.CategoryId != category.CategoryId)
             {
-                return category;
+                    ValidationContext context = new ValidationContext(category, null, null);
+                    List<ValidationResult> results = new List<ValidationResult>();
+                    var isValid = Validator.TryValidateObject(category, context, results, true);
+                    if (isValid)
+                    {
+                        // check for unique name
+                        if (db.Categories.Any(c => c.CategoryName == category.CategoryName))
+                        {
+                            // generate validation error
+                            isValid = false;
+                            results.Add(new ValidationResult("Name exists", new string[] { "CategoryName" }));
+                        }
+                        else
+                        {
+                            logger.Info("Validation passed");
+                        }
+                    }
+                    if (!isValid)
+                    {
+                        foreach (var result in results)
+                        {
+                            logger.Error($"{result.MemberNames.First()} : {result.ErrorMessage}");
+                        }
+                        return null;
+                    }
+                    return category;
             }
             else
             {
-                ValidationContext context = new ValidationContext(category, null, null);
-                List<ValidationResult> results = new List<ValidationResult>();
-                var isValid = Validator.TryValidateObject(category, context, results, true);
-                if (isValid)
-                {
-                    // check for unique name
-                    if (db.Categories.Any(c => c.CategoryName == category.CategoryName))
-                    {
-                        // generate validation error
-                        isValid = false;
-                        results.Add(new ValidationResult("Name exists", new string[] { "CategoryName" }));
-                    }
-                    else
-                    {
-                        logger.Info("Validation passed");
-                    }
-                }
-                if (!isValid)
-                {
-                    foreach (var result in results)
-                    {
-                        logger.Error($"{result.MemberNames.First()} : {result.ErrorMessage}");
-                    }
-                    return null;
-                }
                 return category;
             }
         }
