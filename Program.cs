@@ -62,10 +62,11 @@ namespace NorthwindConsole
                             {
                                 var db = new NWConsole_96_LMBContext();
                                 Categories category = InputCategory(db);
-                                if (category != null)
+                                Categories validCategory = ValidateCategoryName(db, category);
+                                if (validCategory != null)
                                 {
-                                    db.AddCategory(category);
-                                    logger.Info("Category added - {name}", category.CategoryName);
+                                    db.AddCategory(validCategory);
+                                    logger.Info("Category added - {name}", validCategory.CategoryName);
                                 }
                             }
                             catch (Exception ex)
@@ -75,6 +76,7 @@ namespace NorthwindConsole
                         }
                         else if (choice == "3")
                         {
+                            logger.Info("User choice: 3 - Display category and related products");
                             var db = new NWConsole_96_LMBContext();
                             var query = db.Categories.OrderBy(p => p.CategoryId);
 
@@ -132,10 +134,11 @@ namespace NorthwindConsole
                             {
                                 //input new category
                                 Categories UpdatedCategory = InputCategory(db);
-                                if (UpdatedCategory != null)
+                                UpdatedCategory.CategoryId = category.CategoryId;
+                                Categories ValidUpdatedCategory = ValidateCategoryName(db, UpdatedCategory);
+                                if (ValidUpdatedCategory != null)
                                 {
-                                    UpdatedCategory.CategoryId = category.CategoryId;
-                                    db.EditCategory(UpdatedCategory);
+                                    db.EditCategory(ValidUpdatedCategory);
                                     logger.Info($"Category (id: {category.CategoryId}) updated.");
                                 }
                             }
@@ -159,7 +162,7 @@ namespace NorthwindConsole
                                 }
                                 else
                                 {
-                                    logger.Error("Cannot delete category with products in it. You must remove products first to delete the category.");
+                                    logger.Error("Cannot delete category with products in it. To delete the category, first remove any products.");
                                 }
                             }
                         }
@@ -223,6 +226,7 @@ namespace NorthwindConsole
                                 var discontinuedQuery = db.Products.OrderBy(p => p.ProductName).Where(p => p.Discontinued);
                                 Console.WriteLine($"Number of Discontinued Products: {discontinuedQuery.Count()}");
 
+                                Console.ForegroundColor = ConsoleColor.Red;
                                 if (discontinuedQuery.Count() != 0)
                                 {
                                     foreach (var product in discontinuedQuery)
@@ -230,6 +234,7 @@ namespace NorthwindConsole
                                         Console.WriteLine(product.ProductName);
                                     }
                                     Console.WriteLine();
+                                    Console.ForegroundColor = ConsoleColor.White;
                                 }
                                 else
                                 {
@@ -263,10 +268,20 @@ namespace NorthwindConsole
                                 logger.Info("User choice 4: Display specific product information");
                                 Console.WriteLine("Choose a product to display");
                                 var product = GetProduct(db);
-                                
+
                                 if (product != null)
                                 {
-                                    Console.WriteLine($"Product Id: {product.ProductId}\nProduct name: {product.ProductName}\nSupplier Id: {product.SupplierId}\nCategory Id: {product.CategoryId}\nQuantity Per Unit: {product.QuantityPerUnit}\nUnit Price: {product.UnitPrice:C2}\nUnits in Stock: {product.UnitsInStock}\nUnits on Order: {product.UnitsOnOrder}\nReorder Level: {product.ReorderLevel}\n");
+                                    var isActive = product.Discontinued;
+                                    string status;
+                                    if (isActive)
+                                    {
+                                        status = "true";
+                                    }
+                                    else
+                                    {
+                                        status = "false";
+                                    }
+                                    Console.WriteLine($"Product Id: {product.ProductId}\nProduct name: {product.ProductName}\nSupplier Id: {product.SupplierId}\nCategory Id: {product.CategoryId}\nQuantity Per Unit: {product.QuantityPerUnit}\nUnit Price: {product.UnitPrice:C2}\nUnits in Stock: {product.UnitsInStock}\nUnits on Order: {product.UnitsOnOrder}\nReorder Level: {product.ReorderLevel}\nDiscontinued: {status}\n");
                                 }
                                 else
                                 {
@@ -338,7 +353,7 @@ namespace NorthwindConsole
                                 {
                                     db.DeleteProduct(product);
                                     logger.Info($"Product (id: {product.ProductId}) deleted.");
-                                    
+
                                 }
                             }
                         }
@@ -361,33 +376,6 @@ namespace NorthwindConsole
             category.CategoryName = Console.ReadLine();
             Console.WriteLine("Enter Category description");
             category.Description = Console.ReadLine();
-
-            ValidationContext context = new ValidationContext(category, null, null);
-            List<ValidationResult> results = new List<ValidationResult>();
-
-            var isValid = Validator.TryValidateObject(category, context, results, true);
-            if (isValid)
-            {
-                // check for unique name
-                if (db.Categories.Any(c => c.CategoryName == category.CategoryName))
-                {
-                    // generate validation error
-                    isValid = false;
-                    results.Add(new ValidationResult("Name exists", new string[] { "CategoryName" }));
-                }
-                else
-                {
-                    logger.Info("Validation passed");
-                }
-            }
-            if (!isValid)
-            {
-                foreach (var result in results)
-                {
-                    logger.Error($"{result.MemberNames.First()} : {result.ErrorMessage}");
-                }
-                return null;
-            }
             return category;
         }
 
@@ -438,7 +426,6 @@ namespace NorthwindConsole
                 product.CategoryId = int.Parse(categoryID);
             }
 
-
             Console.WriteLine("Enter quantity per unit:");
             var quantityPerUnit = Console.ReadLine();
             if (quantityPerUnit == null || quantityPerUnit == "")
@@ -474,7 +461,6 @@ namespace NorthwindConsole
             {
                 product.UnitsInStock = short.Parse(unitsInStock);
             }
-
 
             Console.WriteLine("Enter units on order:");
             var unitsOnOrder = Console.ReadLine();
@@ -578,6 +564,45 @@ namespace NorthwindConsole
                     return null;
                 }
                 return product;
+            }
+        }
+
+        public static Categories ValidateCategoryName(NWConsole_96_LMBContext db, Categories category)
+        {
+            //if we are editing the product but not changing the name, it is ok
+            var duplicateCategory = db.Categories.Where(c => c.CategoryName == category.CategoryName).FirstOrDefault();
+            if (duplicateCategory.CategoryId == category.CategoryId)
+            {
+                return category;
+            }
+            else
+            {
+                ValidationContext context = new ValidationContext(category, null, null);
+                List<ValidationResult> results = new List<ValidationResult>();
+                var isValid = Validator.TryValidateObject(category, context, results, true);
+                if (isValid)
+                {
+                    // check for unique name
+                    if (db.Categories.Any(c => c.CategoryName == category.CategoryName))
+                    {
+                        // generate validation error
+                        isValid = false;
+                        results.Add(new ValidationResult("Name exists", new string[] { "CategoryName" }));
+                    }
+                    else
+                    {
+                        logger.Info("Validation passed");
+                    }
+                }
+                if (!isValid)
+                {
+                    foreach (var result in results)
+                    {
+                        logger.Error($"{result.MemberNames.First()} : {result.ErrorMessage}");
+                    }
+                    return null;
+                }
+                return category;
             }
         }
     }
