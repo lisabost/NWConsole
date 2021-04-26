@@ -27,7 +27,7 @@ namespace NorthwindConsole.Model
         public short? ReorderLevel { get; set; }
         [Required]
         public bool Discontinued { get; set; }
-
+        
         public virtual Categories Category { get; set; }
         public virtual Suppliers Supplier { get; set; }
         public virtual ICollection<OrderDetails> OrderDetails { get; set; }
