@@ -137,7 +137,7 @@ namespace NorthwindConsole
                                 //input new category
                                 Categories UpdatedCategory = InputCategory(db);
                                 UpdatedCategory.CategoryId = category.CategoryId;
-                                bool editing = true;
+                                bool editing = !category.CategoryName.Equals(UpdatedCategory.CategoryName);
                                 Categories ValidUpdatedCategory = ValidateCategoryName(db, UpdatedCategory, editing);
                                 if (ValidUpdatedCategory != null)
                                 {
@@ -329,7 +329,7 @@ namespace NorthwindConsole
                             {
                                 Products UpdatedProduct = InputProduct(db);
                                 UpdatedProduct.ProductId = product.ProductId;
-                                bool editing = true;
+                                bool editing = !product.ProductName.Equals(UpdatedProduct.ProductName);
                                 Products ValidUpdatedProduct = ValidateProductName(db, UpdatedProduct, editing);
                                 if (ValidUpdatedProduct != null)
                                 {
@@ -538,8 +538,8 @@ namespace NorthwindConsole
             //if we are editing the product but not changing the name, it is ok
             var duplicateProduct = db.Products.Where(p => p.ProductName == product.ProductName).FirstOrDefault();
             //if this is a brand new product the product ID is 0 until it is added to the database
-            
-            if (!editing || duplicateProduct.ProductId != product.ProductId)
+
+            if (editing || duplicateProduct.ProductId != product.ProductId)
             {
                 ValidationContext context = new ValidationContext(product, null, null);
                 List<ValidationResult> results = new List<ValidationResult>();
@@ -579,34 +579,34 @@ namespace NorthwindConsole
             //if we are editing the category but not changing the name, it is ok
             var duplicateCategory = db.Categories.Where(c => c.CategoryName == category.CategoryName).FirstOrDefault();
             //if this is a brand new category the categoryID is 0 until it is added to the database
-            if (!editing || duplicateCategory.CategoryId != category.CategoryId)
+            if (editing || duplicateCategory.CategoryId != category.CategoryId)
             {
-                    ValidationContext context = new ValidationContext(category, null, null);
-                    List<ValidationResult> results = new List<ValidationResult>();
-                    var isValid = Validator.TryValidateObject(category, context, results, true);
-                    if (isValid)
+                ValidationContext context = new ValidationContext(category, null, null);
+                List<ValidationResult> results = new List<ValidationResult>();
+                var isValid = Validator.TryValidateObject(category, context, results, true);
+                if (isValid)
+                {
+                    // check for unique name
+                    if (db.Categories.Any(c => c.CategoryName == category.CategoryName))
                     {
-                        // check for unique name
-                        if (db.Categories.Any(c => c.CategoryName == category.CategoryName))
-                        {
-                            // generate validation error
-                            isValid = false;
-                            results.Add(new ValidationResult("Name exists", new string[] { "CategoryName" }));
-                        }
-                        else
-                        {
-                            logger.Info("Validation passed");
-                        }
+                        // generate validation error
+                        isValid = false;
+                        results.Add(new ValidationResult("Name exists", new string[] { "CategoryName" }));
                     }
-                    if (!isValid)
+                    else
                     {
-                        foreach (var result in results)
-                        {
-                            logger.Error($"{result.MemberNames.First()} : {result.ErrorMessage}");
-                        }
-                        return null;
+                        logger.Info("Validation passed");
                     }
-                    return category;
+                }
+                if (!isValid)
+                {
+                    foreach (var result in results)
+                    {
+                        logger.Error($"{result.MemberNames.First()} : {result.ErrorMessage}");
+                    }
+                    return null;
+                }
+                return category;
             }
             else
             {
