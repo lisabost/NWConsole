@@ -61,10 +61,10 @@ namespace NorthwindConsole
                             try
                             {
                                 var db = new NWConsole_96_LMBContext();
-                                bool editing = false;
+                                bool nameChanged = true;
                                 Categories category = InputCategory(db);
 
-                                Categories validCategory = ValidateCategoryName(db, category, editing);
+                                Categories validCategory = ValidateCategoryName(db, category, nameChanged);
                                 if (validCategory != null)
                                 {
                                     db.AddCategory(validCategory);
@@ -305,8 +305,8 @@ namespace NorthwindConsole
                             {
                                 var db = new NWConsole_96_LMBContext();
                                 Products product = InputProduct(db);
-                                bool editing = false;
-                                Products validProduct = ValidateProductName(db, product, editing);
+                                bool nameChanged = true;
+                                Products validProduct = ValidateProductName(db, product, nameChanged);
                                 if (validProduct != null)
                                 {
                                     db.AddProduct(validProduct);
@@ -329,8 +329,8 @@ namespace NorthwindConsole
                             {
                                 Products UpdatedProduct = InputProduct(db);
                                 UpdatedProduct.ProductId = product.ProductId;
-                                bool editing = !product.ProductName.Equals(UpdatedProduct.ProductName);
-                                Products ValidUpdatedProduct = ValidateProductName(db, UpdatedProduct, editing);
+                                bool nameChanged = !product.ProductName.Equals(UpdatedProduct.ProductName);
+                                Products ValidUpdatedProduct = ValidateProductName(db, UpdatedProduct, nameChanged);
                                 if (ValidUpdatedProduct != null)
                                 {
                                     db.EditProduct(ValidUpdatedProduct);
@@ -533,13 +533,13 @@ namespace NorthwindConsole
             return null;
         }
 
-        public static Products ValidateProductName(NWConsole_96_LMBContext db, Products product, bool editing)
+        public static Products ValidateProductName(NWConsole_96_LMBContext db, Products product, bool nameChanged)
         {
             //if we are editing the product but not changing the name, it is ok
             var duplicateProduct = db.Products.Where(p => p.ProductName == product.ProductName).FirstOrDefault();
             //if this is a brand new product the product ID is 0 until it is added to the database
 
-            if (editing || duplicateProduct.ProductId != product.ProductId)
+            if (nameChanged || duplicateProduct.ProductId != product.ProductId)
             {
                 ValidationContext context = new ValidationContext(product, null, null);
                 List<ValidationResult> results = new List<ValidationResult>();
@@ -574,12 +574,12 @@ namespace NorthwindConsole
             }
         }
 
-        public static Categories ValidateCategoryName(NWConsole_96_LMBContext db, Categories category, bool editing)
+        public static Categories ValidateCategoryName(NWConsole_96_LMBContext db, Categories category, bool nameChanged)
         {
             //if we are editing the category but not changing the name, it is ok
             var duplicateCategory = db.Categories.Where(c => c.CategoryName == category.CategoryName).FirstOrDefault();
             //if this is a brand new category the categoryID is 0 until it is added to the database
-            if (editing || duplicateCategory.CategoryId != category.CategoryId)
+            if (nameChanged || duplicateCategory.CategoryId != category.CategoryId)
             {
                 ValidationContext context = new ValidationContext(category, null, null);
                 List<ValidationResult> results = new List<ValidationResult>();
